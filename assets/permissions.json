@@ -1,0 +1,32 @@
+[
+    {
+        "Admin": {
+            "role": "Admin",
+            "resourceGroup": "Company",
+            "exchangeGroup": "Company",
+            "shiftGroup": "Diensten",
+            "worklocationGroup": null,
+            "userGroup": "n.v.t."
+        }
+    },
+    {
+        "Medewerker": {
+            "role": "Medewerker",
+            "resourceGroup": "Company",
+            "exchangeGroup": "Company",
+            "shiftGroup": "Diensten",
+            "worklocationGroup": null,
+            "userGroup": "n.v.t."
+        }
+    },
+    {
+        "Sales": {
+            "role": "Sales",
+            "resourceGroup": "Company",
+            "exchangeGroup": "Company",
+            "shiftGroup": "Diensten",
+            "worklocationGroup": null,
+            "userGroup": "n.v.t."
+        }
+    }
+]
