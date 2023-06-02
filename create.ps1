@@ -72,6 +72,7 @@ $account = [PSCustomObject]@{
     active              = $false
     email               = $p.Accounts.MicrosoftActiveDirectory.mail
     userGroup           = 'Root'
+    # resource            = $p.ExternalID # Optional add ExternalId in the resource field
 }
 
 # Enable TLS1.2
