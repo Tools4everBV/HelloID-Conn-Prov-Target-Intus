@@ -1,7 +1,4 @@
-
-# HelloID-Conn-Prov-Target-Intus
-
-
+# HelloID-Conn-Prov-Target-Intus-Inplanning
 
 | :information_source: Information |
 |:---------------------------|
@@ -24,7 +21,7 @@
 
 ## Introduction
 
-_HelloID-Conn-Prov-Target-Intus_ is a _target_ connector. The Intus connector facilitates the creation, updating, enabling, and disabling of user accounts in Intus. Additionally, it grants and revokes roles as entitlements to the user account.
+_HelloID-Conn-Prov-Target-Intus-Inplanning_ is a _target_ connector. The Intus Inplanning connector facilitates the creation, updating, enabling, and disabling of user accounts in Intus Inplanning. Additionally, it grants and revokes roles as entitlements to the user account.
 
 | Endpoint                                          | Description                                   |
 | ------------------------------------------------- | --------------------------------------------- |
@@ -63,19 +60,20 @@ The following settings are required to connect to the API.
 
 ### Remarks
 - Set the number of concurrent actions to 1. Otherwise, the 'get token' operation of one run will interfere with that of another run.
-- The username cannot be modified in Intus or helloId since it serves as the account reference.
+- The username cannot be modified in Intus Inplanning or helloId since it serves as the account reference.
 
 ## Permissions Remarks
+- A user in Intus Inplanning can have multiple roles with the same name. These roles cannot be managed by HelloID. The HelloID connector only supports managing unique role names.
 - The creation and update of entitlements utilize the same script, named grant.ps1.
-- The connector uses a pre-defined set of entitlements that are created in Intus inplanning
+- The connector uses a pre-defined set of entitlements that are created in Intus Inplanning
 - The connector exclusively assigns a start date when a new entitlement is appended to an account. The start date remains unaltered when the user's entitlement is subsequently updated.
 - The grant script does not establish the end date; instead, the business rules handle the removal of entitlement when it becomes unnecessary. It is possible to modify this process to assign the attribute 'endDate'.
-- The permission script utilizes placeholder, for now only ({{costCenterOwn}}) in implememted, which will be substituted with a value from the primary contract. It is important to note that this value must be a recognized and established value within Intus.
+- The permission script utilizes placeholder, for now only ({{costCenterOwn}}) in implememted, which will be substituted with a value from the primary contract. It is important to note that this value must be a recognized and established value within Intus Inplanning.
 - The permission script employs an inline JSON object to retrieve the permissions. Alternatively, it is possible to obtain this information from a file using the following command: ```$jsonPermissions = Get-Content "C:\IntusPermissions.json" | ConvertFrom-Json```. Please note that an agent is required to perform this operation.
 - When working with inline permissions in the permission.ps1 script, utilize the following structure:
 
 
-```
+```JSON
 [
     {
         "Admin": {
@@ -106,7 +104,7 @@ You can change this behavior in the `create.ps1` by setting the boolean `$update
 
 > _For more information on how to configure a HelloID PowerShell connector, please refer to our [documentation](https://docs.helloid.com/hc/en-us/articles/360012558020-Configure-a-custom-PowerShell-target-system) pages_
 
-> _If you need help, feel free to ask questions on our [forum](https://forum.helloid.com)_
+> _If you need help, feel free to ask questions on our [forum](https://forum.helloid.com/forum/helloid-connectors/provisioning/1481-helloid-conn-prov-target-intus)_
 
 ## HelloID docs
 
