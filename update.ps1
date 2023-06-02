@@ -10,11 +10,66 @@ $aRef = $AccountReference | ConvertFrom-Json
 $success = $false
 $auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
 
+function New-LastName {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [object]
+        $person
+    )
+
+    switch ($person.Name.Convention) {
+        "B" {
+            $surename = $person.Name.FamilyName
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
+                $surename += ", " + $person.Name.FamilyNamePrefix
+            }
+        }
+        "BP" { 
+            $surename = $person.Name.FamilyName
+            $surename += " - "
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
+                $surename += $person.Name.FamilyNamePartnerPrefix + " "
+            }
+            $surename += $person.Name.FamilyNamePartner
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
+                $surename += ", " + $person.Name.FamilyNamePrefix 
+            }
+        }
+        "P" { 
+            $surename = $person.Name.FamilyNamePartner 
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
+                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
+            }
+        }
+        "PB" { 
+            $surename = $person.Name.FamilyNamePartner
+            $surename += " - "
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
+                $surename += $person.Name.FamilyNamePrefix + " "
+            }
+            $surename += $person.Name.FamilyName   
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
+                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
+            }
+        }
+        default {
+            $surename = $person.Name.FamilyName
+            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
+                $surename += ", " + $person.Name.FamilyNamePrefix
+            }
+        }
+    }
+
+    Write-Output $surename
+}
+
 # Account mapping
 $account = [PSCustomObject]@{
     username            = $p.Accounts.MicrosoftActiveDirectory.UserPrincipalName
     firstName           = $p.Name.GivenName
-    lastName            = $p.Name.FamilyName
+    lastName            = New-LastName -Person $p
     active              = $true
     email               = $p.Accounts.MicrosoftActiveDirectory.mail
     userGroup           = 'Root'
