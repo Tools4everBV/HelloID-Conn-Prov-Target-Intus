@@ -8,6 +8,7 @@ $config = $configuration | ConvertFrom-Json
 $p = $person | ConvertFrom-Json
 $success = $false
 $auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
+$updatePerson = $config.updatePersonOnCorrelate
 
 function New-LastName {
     [CmdletBinding()]
@@ -83,9 +84,6 @@ switch ($($config.IsDebug)) {
     $true { $VerbosePreference = 'Continue' }
     $false { $VerbosePreference = 'SilentlyContinue' }
 }
-
-# Set to true if accounts in the target system must be updated
-$updatePerson = $false
 
 #region functions
 function Get-AccessToken {
