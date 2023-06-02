@@ -68,7 +68,7 @@ function New-LastName {
 # Account mapping
 $account = [PSCustomObject]@{
     username            = $p.Accounts.MicrosoftActiveDirectory.UserPrincipalName
-    firstName           = $p.Name.GivenName
+    firstName           = $p.Name.NickName
     lastName            = New-LastName -Person $p
     active              = $true
     email               = $p.Accounts.MicrosoftActiveDirectory.mail
