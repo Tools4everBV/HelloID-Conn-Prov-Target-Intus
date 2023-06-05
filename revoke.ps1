@@ -1,15 +1,14 @@
-#####################################################
-# HelloID-Conn-Prov-Target-Intus-Entitlement-Revoke
+###############################################################
+# HelloID-Conn-Prov-Target-Intus-Inplanning-Entitlement-Revoke
 #
-# Version: 1.0.0
-#####################################################
+# Version: 1.0.1
+###############################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
 $p = $person | ConvertFrom-Json
 $aRef = $AccountReference | ConvertFrom-Json
 $pRef = $permissionReference | ConvertFrom-Json
 $success = $false
-
 $auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
 
 # Enable TLS1.2

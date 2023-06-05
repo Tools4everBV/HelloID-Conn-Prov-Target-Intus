@@ -23,11 +23,21 @@
     {
         "key": "BaseUrl",
         "type": "input",
-        "defaultValue": "HTTPS://name.rooster.nl/InPlanningService/rest",
+        "defaultValue": "https://name.rooster.nl/InPlanningService/rest",
         "templateOptions": {
             "label": "BaseUrl",
             "description": "The URL to the API.",
             "required": true
+        }
+    },
+    {
+        "key": "updatePersonOnCorrelate",
+        "type": "checkbox",
+        "defaultValue": false,
+        "templateOptions": {
+          "label": "Update Person when correlating",
+          "required": false,
+          "description": "This will update Intus persons in the create action (not just correlate)."
         }
     },
     {

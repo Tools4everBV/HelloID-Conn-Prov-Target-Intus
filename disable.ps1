@@ -1,8 +1,8 @@
-########################################
-# HelloID-Conn-Prov-Target-Intus-Disable
+###################################################
+# HelloID-Conn-Prov-Target-Intus-Inplanning-Disable
 #
-# Version: 1.0.0
-########################################
+# Version: 1.0.1
+###################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
 $p = $person | ConvertFrom-Json
