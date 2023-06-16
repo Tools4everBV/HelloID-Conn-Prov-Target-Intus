@@ -156,7 +156,7 @@ try {
     $headers.Add("Content-Type", "application/json")
     $headers.Add('Authorization', 'Bearer ' + $accessToken)
 
-    Write-Verbose "Verifying if a Intus account for [$($p.DisplayName)] exists"
+    Write-Verbose "Verifying if a Intus-Inplanning account for [$($p.DisplayName)] exists"
 
     if ([string]::IsNullOrEmpty($aRef)){
         throw "No account Reference found"
@@ -180,7 +180,7 @@ try {
     # Always compare the account against the current account in target
     if ($null -eq $responseUser) {
         $action = 'NotFound'
-        $dryRunMessage = "Intus account for: [$($p.DisplayName)] not found. Possibly deleted"
+        $dryRunMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly deleted"
     } else {
         $splatCompareProperties = @{
             ReferenceObject  = @($responseUser.PSObject.Properties)
@@ -205,7 +205,7 @@ try {
     if (-not($dryRun -eq $true)) {
         switch ($action) {
             'Update' {
-                Write-Verbose "Updating Intus account with accountReference: [$aRef]"
+                Write-Verbose "Updating Intus-Inplanning account with accountReference: [$aRef]"
 
                 $body = ($account | ConvertTo-Json -Depth 10)
                 $splatUpdateUserParams = @{
@@ -226,7 +226,7 @@ try {
             }
 
             'NoChanges' {
-                Write-Verbose "No changes to Intus account with accountReference: [$aRef]"
+                Write-Verbose "No changes to Intus-Inplanning account with accountReference: [$aRef]"
 
                 $success = $true
                 $auditLogs.Add([PSCustomObject]@{
@@ -239,7 +239,7 @@ try {
             'NotFound' {
                 $success = $false
                 $auditLogs.Add([PSCustomObject]@{
-                    Message = "Intus account for: [$($p.DisplayName)] not found. Possibly deleted"
+                    Message = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly deleted"
                     IsError = $true
                 })
                 break
@@ -252,10 +252,10 @@ try {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not update Intus account. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not update Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
         Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
-        $auditMessage = "Could not update Intus account. Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not update Intus-Inplanning account. Error: $($ex.Exception.Message)"
         Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $auditLogs.Add([PSCustomObject]@{

@@ -96,7 +96,7 @@ try {
     }
 
     # Verify if a user account exists in the target system
-    Write-Verbose "Verifying if a Intus account for [$($aRef)] exists"
+    Write-Verbose "Verifying if a Intus-Inplanning account for [$($aRef)] exists"
     try {
         $splatGetUserParams = @{
             Uri     = "$($config.BaseUrl)/api/users/$($aRef)"
@@ -113,10 +113,10 @@ try {
 
     if ($responseUser){
         $action = 'Found'
-        $dryRunMessage = "Revoke Intus entitlement: [$($pRef.Reference)] to: [$($p.DisplayName)] will be executed during enforcement"
+        $dryRunMessage = "Revoke Intus-Inplanning entitlement: [$($pRef.Reference)] to: [$($p.DisplayName)] will be executed during enforcement"
     } elseif($null -eq $responseUser) {
         $action = 'NotFound'
-        $dryRunMessage = "Intus account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
+        $dryRunMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
     }
 
     # Add an auditMessage showing what will happen during enforcement
@@ -128,17 +128,17 @@ try {
     if (-not($dryRun -eq $true)) {
         switch ($action){
             'Found' {
-                Write-Verbose "Revoking Intus entitlement: [$($pRef.DisplayName)]"
+                Write-Verbose "Revoking Intus-Inplanning entitlement: [$($pRef.DisplayName)]"
 
                 $existingRole = $responseUser.roles.Where({ $_.role -eq $pref.Reference.role })
                 if ($existingRole.roles.count -gt 1) {
                     throw "Multiple roles with the same name found [$($pRef.DisplayName)]"
 
                 }elseif($existingRole.Count -eq 0){
-                    $auditLogMessage = "Intus entitlement: [$($pRef.DisplayName)] not found. Possibly already deleted. Skipping action"
+                    $auditLogMessage = "Intus-Inplanning entitlement: [$($pRef.DisplayName)] not found. Possibly already deleted. Skipping action"
 
                 }elseif($existingRole.Count -eq 1){
-                    Write-Verbose "Revoking Intus entitlement: [$($pRef.DisplayName)]"
+                    Write-Verbose "Revoking Intus-Inplanning entitlement: [$($pRef.DisplayName)]"
 
                     $responseUser.roles = @($responseUser.roles | Where-Object { $_.role -ne $pRef.Reference.role })  
                     $body = ($responseUser | ConvertTo-Json -Depth 10)
@@ -150,13 +150,13 @@ try {
                         ContentType = "application/json;charset=utf-8"
                     }  
                     $responseUser = Invoke-RestMethod @splatUpdateUserParams
-                    $auditLogMessage = "Revoke Intus entitlement: [$($pRef.DisplayName)] was successful"     
+                    $auditLogMessage = "Revoke Intus-Inplanning entitlement: [$($pRef.DisplayName)] was successful"     
                 }
                 break
             }
 
             'NotFound' {
-                $auditLogMessage = "Intus account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
+                $auditLogMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
                 break
             }
         }
@@ -172,11 +172,11 @@ try {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not revoke Intus entitlement: [$($pRef.DisplayName)]. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not revoke Intus-Inplanning entitlement: [$($pRef.DisplayName)]. Error: $($errorObj.FriendlyMessage)"
         Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     }
     else {
-        $auditMessage = "Could not revoke Intus entitlement: [$($pRef.DisplayName)]. Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not revoke Intus-Inplanning entitlement: [$($pRef.DisplayName)]. Error: $($ex.Exception.Message)"
         Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $auditLogs.Add([PSCustomObject]@{

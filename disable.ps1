@@ -88,7 +88,7 @@ try {
     $headers.Add("Content-Type", "application/json")
     $headers.Add('Authorization', 'Bearer ' + $accessToken)
 
-    Write-Verbose "Verifying if a Intus account for [$($p.DisplayName)] exists"
+    Write-Verbose "Verifying if a Intus-Inplanning account for [$($p.DisplayName)] exists"
     
     if ([string]::IsNullOrEmpty($aRef)){
         throw "No account Reference found"
@@ -111,10 +111,10 @@ try {
 
     if ($responseUser){
         $action = 'Found'
-        $dryRunMessage = "Disable Intus account for: [$($p.DisplayName)] will be executed during enforcement"
+        $dryRunMessage = "Disable Intus-Inplanning account for: [$($p.DisplayName)] will be executed during enforcement"
     } elseif($null -eq $responseUser) {
         $action = 'NotFound'
-        $dryRunMessage = "Intus account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
+        $dryRunMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
     }
 
     # Add an auditMessage showing what will happen during enforcement
@@ -126,7 +126,7 @@ try {
     if (-not($dryRun -eq $true)) {
         switch ($action){
             'Found' {
-                Write-Verbose "Disable Intus account with accountReference: [$aRef]"
+                Write-Verbose "Disable Intus-Inplanning account with accountReference: [$aRef]"
 
                 $responseUser.active = $false
 
@@ -149,7 +149,7 @@ try {
 
             'NotFound' {
                 $auditLogs.Add([PSCustomObject]@{
-                    Message = "Intus account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
+                    Message = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly already deleted. Skipping action"
                     IsError = $false
                 })
                 break
@@ -164,10 +164,10 @@ try {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not disable Intus account. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not disable Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
         Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
-        $auditMessage = "Could not disable Intus account. Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not disable Intus-Inplanning account. Error: $($ex.Exception.Message)"
         Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $auditLogs.Add([PSCustomObject]@{

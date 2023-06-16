@@ -183,14 +183,14 @@ try {
 
     # Add a warning message showing what will happen during enforcement
     if ($dryRun -eq $true) {
-        Write-Warning "[DryRun] $action Intus account for: [$($p.DisplayName)], will be executed during enforcement"
+        Write-Warning "[DryRun] $action Intus-Inplanning account for: [$($p.DisplayName)], will be executed during enforcement"
     }
 
     # Process
     if (-not($dryRun -eq $true)) {
         switch ($action) {
             'Create-Correlate' {
-                Write-Verbose 'Creating and correlating Intus account'
+                Write-Verbose 'Creating and correlating Intus-Inplanning account'
                 $body = ($account | ConvertTo-Json -Depth 10)
                 $splatNewUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
@@ -205,7 +205,7 @@ try {
             }
 
             'Update-Correlate' {
-                Write-Verbose 'Updating and correlating Intus account'
+                Write-Verbose 'Updating and correlating Intus-Inplanning account'
                 $body = ($account | ConvertTo-Json -Depth 10)
                 $splatSetUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
@@ -220,7 +220,7 @@ try {
             }
 
             'Correlate' {
-                Write-Verbose 'Correlating Intus account'
+                Write-Verbose 'Correlating Intus-Inplanning account'
                 $accountReference = $responseUser.UserName
                 break
             }
@@ -238,10 +238,10 @@ try {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not $action Intus account. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not $action Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
         Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
-        $auditMessage = "Could not $action Intus account. Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not $action Intus-Inplanning account. Error: $($ex.Exception.Message)"
         Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $auditLogs.Add([PSCustomObject]@{
