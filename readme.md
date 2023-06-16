@@ -92,7 +92,7 @@ The following settings are required to connect to the API.
 
 A new functionality is the possibility to update the account in the target system during the correlation process. By default, this behavior is disabled. Meaning, the account will only be created or correlated.
 
-You can change this behavior in the `create.ps1` by setting the boolean `$updatePerson` to the value of `$true`.
+You can change this behavior by adjusting the updatePersonOnCorrelate within the configuration
 
 > Be aware that this might have unexpected implications.
 
