@@ -1,7 +1,7 @@
 ###################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Create
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -191,11 +191,13 @@ try {
         switch ($action) {
             'Create-Correlate' {
                 Write-Verbose 'Creating and correlating Intus account'
+                $body = ($account | ConvertTo-Json -Depth 10)
                 $splatNewUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
                     Headers     = $headers
                     Method      = "POST"
-                    Body        = $account | ConvertTo-Json
+                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                    ContentType = "application/json;charset=utf-8"
                 }
                 $responseUser = Invoke-RestMethod @splatNewUserParams
                 $accountReference = $account.UserName
@@ -204,11 +206,13 @@ try {
 
             'Update-Correlate' {
                 Write-Verbose 'Updating and correlating Intus account'
+                $body = ($account | ConvertTo-Json -Depth 10)
                 $splatSetUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
                     Headers     = $headers
                     Method      = "PUT"
-                    Body        = $account | ConvertTo-Json
+                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                    ContentType = "application/json;charset=utf-8"
                 }
                 $responseUser = Invoke-RestMethod @splatSetUserParams
                 $accountReference = $account.UserName

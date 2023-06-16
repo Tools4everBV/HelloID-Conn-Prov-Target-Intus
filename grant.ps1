@@ -1,7 +1,7 @@
 ###############################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Entitlement-Grant
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###############################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -152,12 +152,14 @@ try {
 
     if (-not($dryRun -eq $true)) {
         Write-Verbose "Granting Intus entitlement: [$($pRef.DisplayName)]"
+        $body = ($responseUser | ConvertTo-Json -Depth 10)
         $splatUpdateUserParams = @{
-            Uri     = "$($config.BaseUrl)/api/users"
-            Headers = $headers
-            Method  = "PUT"
-            Body    = $responseUser | ConvertTo-Json 
-        }
+            Uri         = "$($config.BaseUrl)/api/users"
+            Headers     = $headers
+            Method      = "PUT"
+            Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+            ContentType = "application/json;charset=utf-8"
+        } 
         $responseUser = Invoke-RestMethod @splatUpdateUserParams -Verbose:$false
     }
     $success = $true

@@ -1,7 +1,7 @@
 ###############################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Entitlement-Revoke
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###############################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -141,12 +141,14 @@ try {
                     Write-Verbose "Revoking Intus entitlement: [$($pRef.DisplayName)]"
 
                     $responseUser.roles = @($responseUser.roles | Where-Object { $_.role -ne $pRef.Reference.role })  
+                    $body = ($responseUser | ConvertTo-Json -Depth 10)
                     $splatUpdateUserParams = @{
-                        Uri     = "$($config.BaseUrl)/api/users"
-                        Headers = $headers
-                        Method  = "PUT"
-                        Body    = $responseUser | ConvertTo-Json 
-                    }
+                        Uri         = "$($config.BaseUrl)/api/users"
+                        Headers     = $headers
+                        Method      = "PUT"
+                        Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                        ContentType = "application/json;charset=utf-8"
+                    }  
                     $responseUser = Invoke-RestMethod @splatUpdateUserParams
                     $auditLogMessage = "Revoke Intus entitlement: [$($pRef.DisplayName)] was successful"     
                 }

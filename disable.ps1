@@ -1,7 +1,7 @@
 ###################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Disable
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -130,12 +130,14 @@ try {
 
                 $responseUser.active = $false
 
+                $body = ($responseUser | ConvertTo-Json -Depth 10)
                 $splatUpdateUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
                     Headers     = $headers
                     Method      = "PUT"
-                    Body        = $responseUser | ConvertTo-Json 
-                }
+                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                    ContentType = "application/json;charset=utf-8"
+                }  
                 $responseUser = Invoke-RestMethod @splatUpdateUserParams
         
                 $auditLogs.Add([PSCustomObject]@{

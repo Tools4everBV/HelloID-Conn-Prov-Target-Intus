@@ -1,7 +1,7 @@
 ###################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Update
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -207,11 +207,13 @@ try {
             'Update' {
                 Write-Verbose "Updating Intus account with accountReference: [$aRef]"
 
+                $body = ($account | ConvertTo-Json -Depth 10)
                 $splatUpdateUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
                     Headers     = $headers
                     Method      = "PUT"
-                    body        = $account | ConvertTo-Json
+                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                    ContentType = "application/json;charset=utf-8"
                 }
                 $responseUser = Invoke-RestMethod @splatUpdateUserParams
 
