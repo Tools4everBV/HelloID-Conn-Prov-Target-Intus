@@ -2,7 +2,7 @@
 #######################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Permissions
 #
-# Version: 1.0.1
+# Version: 1.1.0
 #######################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json

@@ -1,7 +1,7 @@
 ###################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Enable
 #
-# Version: 1.0.1
+# Version: 1.1.0
 ###################################################
 # Initialize default values
 $config = $configuration | ConvertFrom-Json
@@ -89,7 +89,7 @@ try {
     $headers.Add("Content-Type", "application/json")
     $headers.Add('Authorization', 'Bearer ' + $accessToken)
 
-    Write-Verbose "Verifying if a Intus account for [$($p.DisplayName)] exists"
+    Write-Verbose "Verifying if a Intus-Inplanning account for [$($p.DisplayName)] exists"
     # Make sure to fail the action if the account does not exist in the target system!
     
     if ([string]::IsNullOrEmpty($aRef)){
@@ -112,10 +112,10 @@ try {
     }
     if ($responseUser){
         $action = 'Found'
-        $dryRunMessage = "Enabling Intus account for: [$($p.DisplayName)] will be executed during enforcement"
+        $dryRunMessage = "Enabling Intus-Inplanning account for: [$($p.DisplayName)] will be executed during enforcement"
     } elseif($null -eq $responseUser) {
         $action = 'NotFound'
-        $dryRunMessage = "Intus account for: [$($p.DisplayName)] not found. Possibly deleted."
+        $dryRunMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly deleted."
     }
     
     # Add an auditMessage showing what will happen during enforcement
@@ -127,15 +127,17 @@ try {
     if (-not($dryRun -eq $true)) {
         switch ($action){
             'Found' {
-                Write-Verbose "Enabling Intus account with accountReference: [$aRef]"
+                Write-Verbose "Enabling Intus-Inplanning account with accountReference: [$aRef]"
                 $responseUser.active = $true
 
+                $body = ($responseUser | ConvertTo-Json -Depth 10)
                 $splatUpdateUserParams = @{
                     Uri         = "$($config.BaseUrl)/api/users"
                     Headers     = $headers
                     Method      = "PUT"
-                    Body        = $responseUser | ConvertTo-Json 
-                }
+                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
+                    ContentType = "application/json;charset=utf-8"
+                } 
                 $responseUser = Invoke-RestMethod @splatUpdateUserParams
                 
                 $success = $true
@@ -148,7 +150,7 @@ try {
             'NotFound' {
                 $success = $false
                 $auditLogs.Add([PSCustomObject]@{
-                    Message = "Intus account for: [$($p.DisplayName)] not found. Could not enable account"
+                    Message = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Could not enable account"
                     IsError = $true
                 })
                 break
@@ -161,10 +163,10 @@ try {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not enable Intus account. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not enable Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
         Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
-        $auditMessage = "Could not enable Intus account. Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not enable Intus-Inplanning account. Error: $($ex.Exception.Message)"
         Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $auditLogs.Add([PSCustomObject]@{
