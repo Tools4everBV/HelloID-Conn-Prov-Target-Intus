@@ -39,15 +39,5 @@
           "required": false,
           "description": "This will update Intus persons in the create action (not just correlate)."
         }
-    },
-    {
-        "key": "IsDebug",
-        "type": "checkbox",
-        "defaultValue": true,
-        "templateOptions": {
-            "label": "Toggle debug logging",
-            "description": "When toggled, debug logging will be displayed",
-            "required": false
-        }
     }
 ]
