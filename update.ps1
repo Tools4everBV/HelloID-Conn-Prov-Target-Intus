@@ -1,89 +1,10 @@
-###################################################
+#################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Update
-#
-# Version: 1.1.0
-###################################################
-# Initialize default values
-$config = $configuration | ConvertFrom-Json
-$p = $person | ConvertFrom-Json
-$aRef = $AccountReference | ConvertFrom-Json
-$success = $false
-$auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
-
-function New-LastName {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [object]
-        $person
-    )
-
-    switch ($person.Name.Convention) {
-        "B" {
-            $surename = $person.Name.FamilyName
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix
-            }
-        }
-        "BP" { 
-            $surename = $person.Name.FamilyName
-            $surename += " - "
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += $person.Name.FamilyNamePartnerPrefix + " "
-            }
-            $surename += $person.Name.FamilyNamePartner
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix 
-            }
-        }
-        "P" { 
-            $surename = $person.Name.FamilyNamePartner 
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
-            }
-        }
-        "PB" { 
-            $surename = $person.Name.FamilyNamePartner
-            $surename += " - "
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += $person.Name.FamilyNamePrefix + " "
-            }
-            $surename += $person.Name.FamilyName   
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
-            }
-        }
-        default {
-            $surename = $person.Name.FamilyName
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix
-            }
-        }
-    }
-
-    Write-Output $surename
-}
-
-# Account mapping
-$account = [PSCustomObject]@{
-    username            = $aRef
-    firstName           = $p.Name.NickName
-    lastName            = New-LastName -Person $p
-    active              = $true
-    email               = $p.Accounts.MicrosoftActiveDirectory.mail
-    userGroup           = 'Root'
-    # resource            = $p.ExternalID # Optional add ExternalId in the resource field
-}
+# PowerShell V2
+#################################################
 
 # Enable TLS1.2
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
-
-# Set debug logging
-switch ($($config.IsDebug)) {
-    $true { $VerbosePreference = 'Continue' }
-    $false { $VerbosePreference = 'SilentlyContinue' }
-}
 
 #region functions
 function Get-AccessToken {
@@ -93,28 +14,25 @@ function Get-AccessToken {
     process {
         try {
             $tokenHeaders = [System.Collections.Generic.Dictionary[string, string]]::new()
-            $tokenHeaders.Add("Content-Type", "application/x-www-form-urlencoded")
+            $tokenHeaders.Add('Content-Type', 'application/x-www-form-urlencoded')
 
             $splatGetTokenParams = @{
-                Uri         = "$($config.BaseUrl)/api/token"
-                Headers     = $tokenHeaders
-                Method      = "POST"
-                Body        =  @{
-                    client_id       = $config.clientId
-                    client_secret   = $config.clientSecret
-                    grant_type      = "client_credentials"
+                Uri     = "$($actionContext.Configuration.BaseUrl)/api/token"
+                Headers = $tokenHeaders
+                Method  = 'POST'
+                Body    = @{
+                    client_id     = $actionContext.Configuration.clientId
+                    client_secret = $actionContext.Configuration.clientSecret
+                    grant_type    = 'client_credentials'
                 }
             }
-            write-output (Invoke-RestMethod @splatGetTokenParams).access_token
-        }
-        catch {
+            Write-Output (Invoke-RestMethod @splatGetTokenParams).access_token
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
-        }   
+        }
     }
 }
-
-
-function Resolve-IntusError {
+function Resolve-Intus-InplanningError {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -127,12 +45,11 @@ function Resolve-IntusError {
             Line             = $ErrorObject.InvocationInfo.Line
             ErrorDetails     = $ErrorObject.Exception.Message
             FriendlyMessage  = $ErrorObject.Exception.Message
-        }       
+        }
         if ($ErrorObject.ErrorDetails) {
             $httpErrorObj.ErrorDetails = $ErrorObject.ErrorDetails
             $httpErrorObj.FriendlyMessage = $ErrorObject.ErrorDetails
-        }
-        elseif((-not($null -eq $ErrorObject.Exception.Response) -and $ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException')) {         
+        } elseif ((-not($null -eq $ErrorObject.Exception.Response) -and $ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException')) {
             $streamReaderResponse = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
             if (-not([string]::IsNullOrWhiteSpace($streamReaderResponse))) {
                 $httpErrorObj.ErrorDetails = $streamReaderResponse
@@ -149,125 +66,118 @@ function Resolve-IntusError {
 }
 #endregion
 
-# Begin
 try {
+    # Verify if [aRef] has a value
+    if ([string]::IsNullOrEmpty($($actionContext.References.Account))) {
+        throw 'The account reference could not be found'
+    }
+
+
+    Write-Information "Verifying if a Intus-Inplanning account for [$($personContext.Person.DisplayName)] exists"
     $accessToken = Get-AccessToken
     $headers = [System.Collections.Generic.Dictionary[string, string]]::new()
-    $headers.Add("Content-Type", "application/json")
+    $headers.Add('Content-Type', 'application/json')
     $headers.Add('Authorization', 'Bearer ' + $accessToken)
-
-    Write-Verbose "Verifying if a Intus-Inplanning account for [$($p.DisplayName)] exists"
-
-    if ([string]::IsNullOrEmpty($aRef)){
-        throw "No account Reference found"
-    }
 
     try {
         $splatGetUserParams = @{
-            Uri         = "$($config.BaseUrl)/api/users/$($aRef)"
-            Headers     = $headers
-            Method      = "GET"
+            Uri     = "$($actionContext.Configuration.BaseUrl)/api/users/$($actionContext.References.Account)"
+            Headers = $headers
+            Method  = 'GET'
         }
-        $responseUser = Invoke-RestMethod @splatGetUserParams
-    }
-    catch {
-        if(-not($_.ErrorDetails.Message -match "211 - Object does not exist")){            
+        $correlatedAccount = Invoke-RestMethod @splatGetUserParams
+    } catch {
+        if (-not($_.ErrorDetails.Message -match '211 - Object does not exist')) {
+            $action = 'NotFound'
             throw "Cannot get user error: [$($_.Exception.Message)]"
         }
     }
+    $outputContext.PreviousData = $correlatedAccount
 
-    # Verify if the account must be updated
-    # Always compare the account against the current account in target
-    if ($null -eq $responseUser) {
-        $action = 'NotFound'
-        $dryRunMessage = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly deleted"
-    } else {
+    # Always compare the account against the current account in target system
+    if ($null -ne $correlatedAccount) {
         $splatCompareProperties = @{
-            ReferenceObject  = @($responseUser.PSObject.Properties)
-            DifferenceObject = @($account.PSObject.Properties)
+            ReferenceObject  = @($outputContext.PreviousData.PSObject.Properties)
+            DifferenceObject = @($actionContext.Data.PSObject.Properties)
         }
-        $propertiesChanged = (Compare-Object @splatCompareProperties -PassThru).Where({ $_.SideIndicator -eq '=>' })
+        $propertiesChanged = Compare-Object @splatCompareProperties -PassThru | Where-Object { $_.SideIndicator -eq '=>' }
         if ($propertiesChanged) {
-            $action = 'Update'
-            $dryRunMessage = "Account property(s) required to update: [$($propertiesChanged.name -join ",")]"
-        } elseif (-not($propertiesChanged)) {
+            $action = 'UpdateAccount'
+            $dryRunMessage = "Account property(s) required to update: $($propertiesChanged.Name -join ', ')"
+        } else {
             $action = 'NoChanges'
             $dryRunMessage = 'No changes will be made to the account during enforcement'
-        } 
+        }
+    } else {
+        $action = 'NotFound'
+        $dryRunMessage = "Intus-Inplanning account for: [$($personContext.Person.DisplayName)] not found. Possibly deleted."
     }
 
-    # Add an auditMessage showing what will happen during enforcement
-    if ($dryRun -eq $true) {
-        Write-Warning "[DryRun] $dryRunMessage"
+
+    # Add a message and the result of each of the validations showing what will happen during enforcement
+    if ($actionContext.DryRun -eq $true) {
+        Write-Information "[DryRun] $dryRunMessage"
     }
 
     # Process
-    if (-not($dryRun -eq $true)) {
+    if (-not($actionContext.DryRun -eq $true)) {
         switch ($action) {
-            'Update' {
-                Write-Verbose "Updating Intus-Inplanning account with accountReference: [$aRef]"
+            'UpdateAccount' {
+                Write-Information "Updating Intus-Inplanning account with accountReference: [$($actionContext.References.Account)]"
 
-                $body = ($account | ConvertTo-Json -Depth 10)
+                $body = ($actionContext.Data | ConvertTo-Json -Depth 10)
                 $splatUpdateUserParams = @{
-                    Uri         = "$($config.BaseUrl)/api/users"
+                    Uri         = "$($actionContext.Configuration.BaseUrl)/api/users"
                     Headers     = $headers
-                    Method      = "PUT"
+                    Method      = 'PUT'
                     Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
-                    ContentType = "application/json;charset=utf-8"
+                    ContentType = 'application/json;charset=utf-8'
                 }
-                $responseUser = Invoke-RestMethod @splatUpdateUserParams
+                $null = Invoke-RestMethod @splatUpdateUserParams
 
-                $success = $true
-                $auditLogs.Add([PSCustomObject]@{
-                    Message = 'Update account was successful'
-                    IsError = $false
-                })
+                $outputContext.Success = $true
+                $outputContext.AuditLogs.Add([PSCustomObject]@{
+                        Message = "Update account was successful, Account property(s) updated: [$($propertiesChanged.name -join ',')]"
+                        IsError = $false
+                    })
                 break
             }
 
             'NoChanges' {
-                Write-Verbose "No changes to Intus-Inplanning account with accountReference: [$aRef]"
+                Write-Information "No changes to Intus-Inplanning account with accountReference: [$($actionContext.References.Account)]"
 
-                $success = $true
-                $auditLogs.Add([PSCustomObject]@{
-                    Message = 'No changes are made to the account during enforcement'
-                    IsError = $false
-                })
+                $outputContext.Success = $true
+                $outputContext.AuditLogs.Add([PSCustomObject]@{
+                        Message = 'No changes will be made to the account during enforcement'
+                        IsError = $false
+                    })
                 break
             }
 
             'NotFound' {
-                $success = $false
-                $auditLogs.Add([PSCustomObject]@{
-                    Message = "Intus-Inplanning account for: [$($p.DisplayName)] not found. Possibly deleted"
-                    IsError = $true
-                })
+                $outputContext.Success = $false
+                $outputContext.AuditLogs.Add([PSCustomObject]@{
+                        Message = "Intus-Inplanning account with accountReference: [$($actionContext.References.Account)] could not be found, possibly indicating that it could be deleted"
+                        IsError = $true
+                    })
                 break
             }
         }
     }
 } catch {
-    $success = $false
+    $outputContext.Success = $false
     $ex = $PSItem
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
-        $errorObj = Resolve-IntusError -ErrorObject $ex
+        $errorObj = Resolve-Intus-InplanningError -ErrorObject $ex
         $auditMessage = "Could not update Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
-        Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
+        Write-Warning "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
         $auditMessage = "Could not update Intus-Inplanning account. Error: $($ex.Exception.Message)"
-        Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
+        Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
-    $auditLogs.Add([PSCustomObject]@{
+    $outputContext.AuditLogs.Add([PSCustomObject]@{
             Message = $auditMessage
             IsError = $true
         })
-# End
-} finally {
-    $result = [PSCustomObject]@{
-        Success   = $success
-        Account   = $account
-        Auditlogs = $auditLogs
-    }
-    Write-Output $result | ConvertTo-Json -Depth 10
 }

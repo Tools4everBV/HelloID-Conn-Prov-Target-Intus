@@ -1,89 +1,10 @@
-###################################################
+#################################################
 # HelloID-Conn-Prov-Target-Intus-Inplanning-Create
-#
-# Version: 1.1.0
-###################################################
-# Initialize default values
-$config = $configuration | ConvertFrom-Json
-$p = $person | ConvertFrom-Json
-$success = $false
-$auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
-$updatePerson = $config.updatePersonOnCorrelate
-
-function New-LastName {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [object]
-        $person
-    )
-
-    switch ($person.Name.Convention) {
-        "B" {
-            $surename = $person.Name.FamilyName
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix
-            }
-        }
-        "BP" { 
-            $surename = $person.Name.FamilyName
-            $surename += " - "
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += $person.Name.FamilyNamePartnerPrefix + " "
-            }
-            $surename += $person.Name.FamilyNamePartner
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix 
-            }
-        }
-        "P" { 
-            $surename = $person.Name.FamilyNamePartner 
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
-            }
-        }
-        "PB" { 
-            $surename = $person.Name.FamilyNamePartner
-            $surename += " - "
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += $person.Name.FamilyNamePrefix + " "
-            }
-            $surename += $person.Name.FamilyName   
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePartnerPrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePartnerPrefix 
-            }
-        }
-        default {
-            $surename = $person.Name.FamilyName
-            if (-Not([string]::IsNullOrEmpty($person.Name.FamilyNamePrefix))) {
-                $surename += ", " + $person.Name.FamilyNamePrefix
-            }
-        }
-    }
-
-    Write-Output $surename
-}
-
-# Account mapping
-$account = [PSCustomObject]@{
-    username            = $p.Accounts.MicrosoftActiveDirectory.UserPrincipalName
-    firstName           = $p.Name.NickName
-    lastName            = New-LastName -Person $p
-    active              = $false
-    email               = $p.Accounts.MicrosoftActiveDirectory.mail
-    userGroup           = 'Root'
-    # resource            = $p.ExternalID # Optional add ExternalId in the resource field
-}
+# PowerShell V2
+#################################################
 
 # Enable TLS1.2
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
-
-# Set debug logging
-switch ($($config.IsDebug)) {
-    $true { $VerbosePreference = 'Continue' }
-    $false { $VerbosePreference = 'SilentlyContinue' }
-}
 
 #region functions
 function Get-AccessToken {
@@ -93,26 +14,25 @@ function Get-AccessToken {
     process {
         try {
             $tokenHeaders = [System.Collections.Generic.Dictionary[string, string]]::new()
-            $tokenHeaders.Add("Content-Type", "application/x-www-form-urlencoded")
+            $tokenHeaders.Add('Content-Type', 'application/x-www-form-urlencoded')
 
             $splatGetTokenParams = @{
-                Uri         = "$($config.BaseUrl)/api/token"
-                Headers     = $tokenHeaders
-                Method      = "POST"
-                Body        =  @{
-                    client_id       = $config.clientId
-                    client_secret   = $config.clientSecret
-                    grant_type      = "client_credentials"
+                Uri     = "$($actionContext.Configuration.BaseUrl)/api/token"
+                Headers = $tokenHeaders
+                Method  = 'POST'
+                Body    = @{
+                    client_id     = $actionContext.Configuration.clientId
+                    client_secret = $actionContext.Configuration.clientSecret
+                    grant_type    = 'client_credentials'
                 }
             }
-            write-output (Invoke-RestMethod @splatGetTokenParams).access_token
-        }
-        catch {
+            Write-Output (Invoke-RestMethod @splatGetTokenParams).access_token
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
-        }   
+        }
     }
 }
-function Resolve-IntusError {
+function Resolve-Intus-InplanningError {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -125,12 +45,11 @@ function Resolve-IntusError {
             Line             = $ErrorObject.InvocationInfo.Line
             ErrorDetails     = $ErrorObject.Exception.Message
             FriendlyMessage  = $ErrorObject.Exception.Message
-        }       
+        }
         if ($ErrorObject.ErrorDetails) {
             $httpErrorObj.ErrorDetails = $ErrorObject.ErrorDetails
             $httpErrorObj.FriendlyMessage = $ErrorObject.ErrorDetails
-        }
-        elseif((-not($null -eq $ErrorObject.Exception.Response) -and $ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException')) {         
+        } elseif ((-not($null -eq $ErrorObject.Exception.Response) -and $ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException')) {
             $streamReaderResponse = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
             if (-not([string]::IsNullOrWhiteSpace($streamReaderResponse))) {
                 $httpErrorObj.ErrorDetails = $streamReaderResponse
@@ -147,117 +66,100 @@ function Resolve-IntusError {
 }
 #endregion
 
-# Begin
 try {
-    $accessToken = Get-AccessToken
-    $headers = [System.Collections.Generic.Dictionary[string, string]]::new()
-    $headers.Add("Content-Type", "application/json")
-    $headers.Add('Authorization', 'Bearer ' + $accessToken)
+    # Validate correlation configuration
+    if ($actionContext.CorrelationConfiguration.Enabled) {
+        $correlationField = $actionContext.CorrelationConfiguration.accountField
+        $correlationValue = $actionContext.CorrelationConfiguration.accountFieldValue
 
-    if ([string]::IsNullOrEmpty($account.username)){
-        throw "Username empty or not found"
+        if ([string]::IsNullOrEmpty($($correlationField))) {
+            throw 'Correlation is enabled but not configured correctly'
+        }
+        if ([string]::IsNullOrEmpty($($correlationValue))) {
+            throw 'Correlation is enabled but [accountFieldValue] is empty. Please make sure it is correctly mapped'
+        }
+
+        # Verify if a user must be either [created ] or just [correlated]
+        $accessToken = Get-AccessToken
+        $headers = [System.Collections.Generic.Dictionary[string, string]]::new()
+        $headers.Add('Content-Type', 'application/json')
+        $headers.Add('Authorization', 'Bearer ' + $accessToken)
+
+        try {
+            $splatGetUserParams = @{
+                Uri     = "$($actionContext.Configuration.BaseUrl)/api/users/$correlationValue"
+                Headers = $headers
+                Method  = 'GET'
+            }
+            $correlatedAccount = Invoke-RestMethod @splatGetUserParams
+        } catch {
+            if (-not($_.ErrorDetails.Message -match '211 - Object does not exist')) {
+                throw "Cannot get user error: [$($_.Exception.Message)]"
+            }
+        }
     }
 
-    try {
-        $splatGetUserParams = @{
-            Uri         = "$($config.BaseUrl)/api/users/$($account.UserName)"
-            Headers     = $headers
-            Method      = "GET"
-        }
-        $responseUser = Invoke-RestMethod @splatGetUserParams
-    }
-    catch {
-        if(-not($_.ErrorDetails.Message -match "211 - Object does not exist")){            
-            throw "Cannot get user error: [$($_.Exception.Message)]"
-        }
-    }
-    
-    # Verify if a user must be either [created and correlated], [updated and correlated] or just [correlated]
-    if ($null -eq $responseUser){
-        $action = 'Create-Correlate'
-    } elseif ($updatePerson -eq $true) {
-        $action = 'Update-Correlate'
+    if ($null -ne $correlatedAccount) {
+        $action = 'CorrelateAccount'
     } else {
-        $action = 'Correlate'
+        $action = 'CreateAccount'
     }
 
-    # Add a warning message showing what will happen during enforcement
-    if ($dryRun -eq $true) {
-        Write-Warning "[DryRun] $action Intus-Inplanning account for: [$($p.DisplayName)], will be executed during enforcement"
+    # Add a message and the result of each of the validations showing what will happen during enforcement
+    if ($actionContext.DryRun -eq $true) {
+        Write-Information "[DryRun] $action Intus-Inplanning account for: [$($personContext.Person.DisplayName)], will be executed during enforcement"
     }
 
     # Process
-    if (-not($dryRun -eq $true)) {
+    if (-not($actionContext.DryRun -eq $true)) {
         switch ($action) {
-            'Create-Correlate' {
-                Write-Verbose 'Creating and correlating Intus-Inplanning account'
-                $body = ($account | ConvertTo-Json -Depth 10)
+            'CreateAccount' {
+                Write-Information 'Creating and correlating Intus-Inplanning account'
+                $body = ($actionContext.Data | ConvertTo-Json -Depth 10)
                 $splatNewUserParams = @{
-                    Uri         = "$($config.BaseUrl)/api/users"
+                    Uri         = "$($actionContext.Configuration.BaseUrl)/api/users"
                     Headers     = $headers
-                    Method      = "POST"
+                    Method      = 'POST'
                     Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
-                    ContentType = "application/json;charset=utf-8"
+                    ContentType = 'application/json;charset=utf-8'
                 }
-                $responseUser = Invoke-RestMethod @splatNewUserParams
-                $accountReference = $account.UserName
+                $createdAccount = Invoke-RestMethod @splatNewUserParams
+                $outputContext.Data = $createdAccount
+                $outputContext.AccountReference = $correlationValue
+                $auditLogMessage = "Create account was successful. AccountReference is: [$($outputContext.AccountReference)"
                 break
             }
 
-            'Update-Correlate' {
-                Write-Verbose 'Updating and correlating Intus-Inplanning account'
-                $body = ($account | ConvertTo-Json -Depth 10)
-                $splatSetUserParams = @{
-                    Uri         = "$($config.BaseUrl)/api/users"
-                    Headers     = $headers
-                    Method      = "PUT"
-                    Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
-                    ContentType = "application/json;charset=utf-8"
-                }
-                $responseUser = Invoke-RestMethod @splatSetUserParams
-                $accountReference = $account.UserName
-                break
-            }
-
-            'Correlate' {
-                Write-Verbose 'Correlating Intus-Inplanning account'
-                $accountReference = $responseUser.UserName
+            'CorrelateAccount' {
+                Write-Information 'Correlating Intus-Inplanning account'
+                $outputContext.Data = $correlatedAccount
+                $outputContext.AccountReference = $correlatedAccount.UserName
+                $outputContext.AccountCorrelated = $true
+                $auditLogMessage = "Correlated account: [$($correlatedAccount.UserName)] on field: [$($correlationField)] with value: [$($correlationValue)]"
                 break
             }
         }
-
-        $success = $true
-        $auditLogs.Add([PSCustomObject]@{
-                Message = "$action account was successful. AccountReference is: [$accountReference]"
+        $outputContext.AuditLogs.Add([PSCustomObject]@{
+                Action  = $action
+                Message = $auditLogMessage
                 IsError = $false
             })
     }
+    $outputContext.success = $true
 } catch {
-    $success = $false
+    $outputContext.success = $false
     $ex = $PSItem
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
-        $errorObj = Resolve-IntusError -ErrorObject $ex
-        $auditMessage = "Could not $action Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
-        Write-Verbose "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
+        $errorObj = Resolve-Intus-InplanningError -ErrorObject $ex
+        $auditMessage = "Could not create or correlate Intus-Inplanning account. Error: $($errorObj.FriendlyMessage)"
+        Write-Warning "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     } else {
-        $auditMessage = "Could not $action Intus-Inplanning account. Error: $($ex.Exception.Message)"
-        Write-Verbose "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
+        $auditMessage = "Could not create or correlate Intus-Inplanning account. Error: $($ex.Exception.Message)"
+        Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
-    $auditLogs.Add([PSCustomObject]@{
+    $outputContext.AuditLogs.Add([PSCustomObject]@{
             Message = $auditMessage
             IsError = $true
         })
-# End
-} finally {
-    $result = [PSCustomObject]@{
-        Success          = $success
-        AccountReference = $accountReference
-        Auditlogs        = $auditLogs
-        Account          = $account
-        ExportData = [PSCustomObject]@{
-            Username = $accountReference
-        }
-    }
-    Write-Output $result | ConvertTo-Json -Depth 10
 }
