@@ -49,8 +49,8 @@ The following lifecycle actions are available:
 | revokePermission.ps1   | PowerShell _revoke_ lifecycle action             |
 | permissions.ps1        | PowerShell _permissions_ lifecycle action        |
 | resources.ps1          | -       |
-| configuration.json     | Default _[Configuration.json](https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Intus-Inplanning/blob/main/target/configuration.json)_ |
-| fieldMapping.json      | Default _[FieldMapping.json](https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Intus-Inplanning/blob/main/target/fieldMapping.json)_   |
+| configuration.json     | Default _[Configuration.json](https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Intus-Inplanning/blob/main/configuration.json)_ |
+| fieldMapping.json      | Default _[FieldMapping.json](https://github.com/Tools4everBV/HelloID-Conn-Prov-Target-Intus-Inplanning/blob/main/fieldMapping.json)_   |
 
 ## Getting started
 
