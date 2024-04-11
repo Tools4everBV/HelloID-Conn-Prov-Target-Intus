@@ -87,15 +87,14 @@ try {
         }
         $correlatedAccount = Invoke-RestMethod @splatGetUserParams
     } catch {
-        if (-not($_.ErrorDetails.Message -match '211 - Object does not exist')) {
-            $action = 'NotFound'
+        if ( -not ($_.ErrorDetails.Message -match '211 - Object does not exist')) {
             throw "Cannot get user error: [$($_.Exception.Message)]"
         }
     }
-    $outputContext.PreviousData = $correlatedAccount
 
     # Always compare the account against the current account in target system
     if ($null -ne $correlatedAccount) {
+        $outputContext.PreviousData = $correlatedAccount
         $splatCompareProperties = @{
             ReferenceObject  = @($outputContext.PreviousData.PSObject.Properties)
             DifferenceObject = @($actionContext.Data.PSObject.Properties)
