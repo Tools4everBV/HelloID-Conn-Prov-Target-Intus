@@ -121,7 +121,7 @@ The following settings are required to connect to the API.
 ```
 
 
-- You can utilize a variable within the JSON permissions, such as your own CostCenter, for example. Currently, an example variable named `{{costCenterOwn}}` is included in the grant script. You can integrate this variable name into your JSON within the permission script. Additionally, an example is provided in the grant script to substitute the variable with a value from the primary contract. It's important to note that this value must be recognized and established within Intus.
+- You can utilize a variable within the JSON permissions, such as your own CostCenter, for example. Currently, an example variable named `{{costCenterOwn}}` AND `{{LocationOwn}}` is included in the grant script. You can integrate this variable name into your JSON within the permission script. Additionally, an example is provided in the grant script to substitute the variable with a value from the contract that is 'incondition'. It's important to note that this value must be recognized and established within Intus.
 
 **Example of the JSON permissions and the PowerShell code snippet**
 ```JSON
@@ -129,16 +129,21 @@ The following settings are required to connect to the API.
 ```
 
 ```PowerShell
-    $mappedProperty = $personContext.Person.PrimaryContract.CostCenter.Name
-    foreach ($property in $actionContext.References.Permission.Reference.PSObject.Properties) {
-        if ($property.value -eq '{{costCenterOwn}}') {
-            if ([string]::IsNullOrEmpty($mappedProperty)) {
-                throw 'Permission expects [{{costCenterOwn}}] to grant the permission the specified cost center is empty'
+foreach ($contract in $personContext.Person.Contracts) {
+  ....
+        $mappedProperty = $contract.CostCenter.Name
+  
+        foreach ($property in $newRole.PSObject.Properties) {
+            if ($property.value -eq '{{costCenterOwn}}') {
+                if ([string]::IsNullOrEmpty($mappedProperty)) {
+                    throw 'Permission expects [{{costCenterOwn}}] to grant the permission the specified cost center is empty'
+                }
+                $newRole."$($property.name)" = $mappedProperty
+                Write-verbose "Replacing property: [$($property.name)] value: [{{costCenterOwn}}] with [$($mappedProperty)]"
             }
-            $actionContext.References.Permission.Reference."$($property.name)" = $mappedProperty
-            Write-Information "Replacing property: [$($property.name)] value: [{{costCenterOwn}}] with [$($mappedProperty)]"
         }
-    }
+  ...
+}
 ```
 
 ## Getting help
