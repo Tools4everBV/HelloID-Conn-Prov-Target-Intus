@@ -12,14 +12,28 @@ try {
     $jsonPermissions = @'
     [
         {
-            "Example": {
-                "role": "Example",
-                "resourceGroup": "Company",
-                "exchangeGroup": "Company",
-                "shiftGroup": "Diensten",
-                "worklocationGroup": null,
-                "userGroup": "n.v.t."
-            }
+            "role": "Planner",
+            "resourceGroup": "Planner {{LocationOwn}}",
+            "exchangeGroup": "Company",
+            "shiftGroup": "Company",
+            "worklocationGroup": "Root",
+            "userGroup": "Root"
+        },
+        {
+            "role": "Leidinggevende",
+            "resourceGroup": "{{costcenterOwn}}",
+            "exchangeGroup": "Company",
+            "shiftGroup": "Company",
+            "worklocationGroup": "Root",
+            "userGroup": "Root"
+        },
+        {
+            "role": "ADMIN",
+            "resourceGroup": "ADMIN",
+            "exchangeGroup": "ADMIN",
+            "shiftGroup": "ADMIN",
+            "worklocationGroup": "Root",
+            "userGroup": "Root"
         }
     ]
 '@
@@ -27,14 +41,15 @@ try {
     $permissionList = $jsonPermissions | ConvertFrom-Json
     foreach ($permission in $permissionList) {
         $outputContext.Permissions.Add(@{
-            DisplayName    = $permission.PSObject.Properties.Name
-            Identification = @{
-                Reference   = $permission."$($permission.PSObject.Properties.Name)"
-                DisplayName = $permission.PSObject.Properties.Name
-            }
-        })
+                DisplayName    = $permission.PSObject.Properties.Name
+                Identification = @{
+                    Reference   = $permission."$($permission.PSObject.Properties.Name)"
+                    DisplayName = $permission.PSObject.Properties.Name
+                }
+            })
     }
-} catch {
+}
+catch {
     $ex = $PSItem
     Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
 }

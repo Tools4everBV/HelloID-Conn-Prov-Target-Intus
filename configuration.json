@@ -35,9 +35,19 @@
         "type": "checkbox",
         "defaultValue": false,
         "templateOptions": {
-          "label": "Update Person when correlating",
-          "required": false,
-          "description": "This will update Intus persons in the create action (not just correlate)."
+            "label": "Update Person when correlating",
+            "required": false,
+            "description": "This will update Intus persons in the create action (not just correlate)."
+        }
+    },
+    {
+        "key": "isDebug",
+        "type": "checkbox",
+        "defaultValue": false,
+        "templateOptions": {
+            "label": "Toggle debug logging",
+            "description": "When toggled, debug logging will be displayed",
+            "required": false
         }
     }
 ]
