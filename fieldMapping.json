@@ -46,7 +46,7 @@
             "Update"
           ],
           "MappingMode": "Complex",
-          "Value": "\"function getValue() {\\r\\n    return  Person.Accounts._4c2011579e8f496da985e401e7fafa32.mail;\\r\\n\\r\\n}\\r\\ngetValue();\"",
+          "Value": "\"function getValue() {\\r\\n    return  Person.Accounts.MicrosoftActiveDirectory.mail;\\r\\n\\r\\n}\\r\\ngetValue();\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
