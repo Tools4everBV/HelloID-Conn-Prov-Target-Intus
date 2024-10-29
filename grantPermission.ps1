@@ -95,6 +95,9 @@ try {
             Method  = 'GET'
         }
         $correlatedAccount = Invoke-RestMethod @splatGetUserParams
+
+
+
     }
     catch {
         if ( -not ($_.ErrorDetails.Message -match '211 - Object does not exist')) {
@@ -104,7 +107,7 @@ try {
 
     if ($null -ne $correlatedAccount) {
         Write-verbose "current roles: $($correlatedAccount.roles | convertto-json)"
-        $currentRoles = $correlatedAccount.roles.psobject.copy()
+        [System.Collections.ArrayList]$currentRoles = $correlatedAccount.roles.psobject.copy()
     }
     else {
         Throw "Intus-Inplanning account: [$($actionContext.References.Account)] for person: [$($personContext.Person.DisplayName)] could not be found, possibly indicating that it could be deleted"
@@ -112,84 +115,132 @@ try {
 
 
     # Sub-permissions
-    $newRoles = [System.Collections.Generic.List[PSCustomObject]]::new()
-
-    if ($null -ne $currentRoles) {
-        $newRoles = $currentRoles.psobject.copy()
-    }
-
     foreach ($contract in $personContext.Person.Contracts) {
         $newRole = $actionContext.References.Permission.Reference.psobject.copy()
+
+        #clear enddate when granting role
+        $newRole | add-member -type noteproperty -name endDate -value $null -force
 
         if ($contract.Context.InConditions -OR $actionContext.DryRun) {
             # Example Replacing placeholders in the permission with the value's from HelloId contract
             # Custom Permissions mapping
-            $mappedProperty = $contract.CostCenter.Name
+            $mappedProperty = $contract.Department.ExternalId
+
+            $replaceVariable = '{{costCenterOwn}}'
 
             foreach ($property in $newRole.PSObject.Properties) {
-                if ($property.value -eq '{{costCenterOwn}}') {
+                if ($property.value -like "*$replaceVariable*") {
                     if ([string]::IsNullOrEmpty($mappedProperty)) {
-                        throw 'Permission expects [{{costCenterOwn}}] to grant the permission the specified cost center is empty'
+                        throw 'Permission expects [$replaceVariable] to grant the permission the specified cost center is empty'
                     }
-                    $newRole."$($property.name)" = $mappedProperty
-                    Write-verbose "Replacing property: [$($property.name)] value: [{{costCenterOwn}}] with [$($mappedProperty)]"
+                    $newRole."$($property.name)" = $newRole."$($property.name)" -replace ($replaceVariable, $mappedProperty)
+                    Write-verbose "Replacing property: [$($property.name)] value: [$replaceVariable] with [$($mappedProperty)]"
                 }
             }
+
+            #locationOwn
             $mappedProperty = $contract.Division.Name
-
+            $replaceVariable = '{{locationOwn}}'
 
             foreach ($property in $newRole.PSObject.Properties) {
-                if ($property.value -eq '{{LocationOwn}}') {
+                if ($property.value -like "*$replaceVariable*") {
                     if ([string]::IsNullOrEmpty($mappedProperty)) {
-                        throw 'Permission expects [{{LocationOwn}}] to grant the permission the specified cost center is empty'
+                        throw 'Permission expects [$replaceVariable] to grant the permission the specified cost center is empty'
                     }
-                    $newRole."$($property.name)" = $mappedProperty
-                    Write-verbose "Replacing property: [$($property.name)] value: [{{LocationOwn}}] with [$($mappedProperty)]"
+                    $newRole."$($property.name)" = $newRole."$($property.name)" -replace ($replaceVariable, $mappedProperty)
+                    Write-verbose "Replacing property: [$($property.name)] value: [$replaceVariable] with [$($mappedProperty)]"
                 }
             }
-            # Add or update user with role
+
+    
+            #locationCode
+            $mappedProperty = $contract.location.name          
+
+            $replaceVariable = '{{locationCode}}'
+
+            foreach ($property in $newRole.PSObject.Properties) {
+                if ($property.value -like "*$replaceVariable*") {
+                    if ([string]::IsNullOrEmpty($mappedProperty)) {
+                        throw 'Permission expects [$replaceVariable] to grant the permission the specified cost center is empty'
+                    }
+                    $newRole."$($property.name)" = $newRole."$($property.name)" -replace ($replaceVariable, $mappedProperty)
+                    Write-verbose "Replacing property: [$($property.name)] value: [$replaceVariable] with [$($mappedProperty)]"
+                }
+            }
+
+            #department
+            $mappedProperty = $contract.department.externalID          
+
+            $replaceVariable = '{{departmentCode}}'
+
+            foreach ($property in $newRole.PSObject.Properties) {
+                if ($property.value -like "*$replaceVariable*") {
+                    if ([string]::IsNullOrEmpty($mappedProperty)) {
+                        throw 'Permission expects [$replaceVariable] to grant the permission the specified cost center is empty'
+                    }
+                    $newRole."$($property.name)" = $newRole."$($property.name)" -replace ($replaceVariable, $mappedProperty)
+                    Write-verbose "Replacing property: [$($property.name)] value: [$replaceVariable] with [$($mappedProperty)]"
+                }
+            }
+
+
+            # Add or update user with role First check role+resource group
+             if ($actionContext.DryRun -eq $true) {
+                Write-Warning "current: $($currentRoles | convertto-json)"
+             }
+
             $existingRole = $currentRoles.Where({ $_.role -eq $newRole.role -AND $_.resourceGroup -eq $newRole.resourceGroup })
             if ($existingRole.count -gt 1) {
                 throw "Multiple roles with the same name found [$($newRole.role)]"
             }
-            elseif ($existingRole.count -eq 1) {
-                foreach ($propertiesToUpdate in $newRole.PSObject.Properties) {
-                    $existingRole | Add-Member -MemberType NoteProperty -Name "$($propertiesToUpdate.name)" -Value $propertiesToUpdate.value -Force
-                }
-            }
-
-
-            Write-verbose "$($existingRole | convertto-json)"
-
-            $existingNewRole = $newRoles.Where({ $_.role -eq $newRole.role -AND $_.resourceGroup -eq $newRole.resourceGroup })
-            
-            if ($existingNewRole.count -eq 0) {
+            elseif ($existingRole.count -eq 0) {
                 $action = "GrantPermission"
-                $newRoles += $newRole
-
-
-                $SubPermissionsDisplayName = "$($newRole.role): $($newRole.resourceGroup)"
-                $SubPermissionsReference = $newRole
-                $exstingSubpermission = $outputContext.SubPermissions | where-object displayname -eq "$SubPermissionsDisplayName"
-
-                if (($exstingSubpermission | measure-object).count -eq 0) {
-                    $outputContext.SubPermissions.Add([PSCustomObject]@{
-                            DisplayName = $SubPermissionsDisplayName 
-                            Reference   = $SubPermissionsReference
-                        }
-                    )
-
-                }
-
-
+                $currentRoles += $newRole
             }
+            elseif ($existingRole.count -eq 1) {
+
+                # Write-Warning "exist: $($existingRole | convertto-json)"
+                # Write-Warning "new: $($newRole | convertto-json)"
+
+                #compare existingrole with newRole for other changes.
+                $splatCompareProperties = @{
+                    ReferenceObject  = @(($existingRole | select-object).psobject.properties)
+                    DifferenceObject = @(($newRole  | select-object).psobject.properties)
+                }           
+                $changedProperties = $null
+                $changedProperties = (Compare-Object @splatCompareProperties -PassThru)
+                $oldProperties = $changedProperties.Where( { $_.SideIndicator -eq "<=" })
+                $newProperties = $changedProperties.Where( { $_.SideIndicator -eq "=>" })
+
+                if (($newProperties | measure-object).count -gt 0) {
+                    if ($actionContext.DryRun -eq $true) {
+                        Write-Warning "[DRYRUN] update role; changed properties : $($newProperties.name -join("; ")))"
+                    }
+                    $action = "GrantPermission"
+                    $currentRoles = $existingRole = $currentRoles.Where({ -NOT ($_.role -eq $newRole.role -AND $_.resourceGroup -eq $newRole.resourceGroup) })
+                    $currentRoles += $newRole
+                }
+            }
+
+            $SubPermissionsDisplayName = "$($newRole.role): $($newRole.resourceGroup)"
+            $SubPermissionsReference = $newRole
+            $exstingSubpermission = $outputContext.SubPermissions | where-object displayname -eq "$SubPermissionsDisplayName"
+
+            if (($exstingSubpermission | measure-object).count -eq 0) {
+                $outputContext.SubPermissions.Add([PSCustomObject]@{
+                        DisplayName = $SubPermissionsDisplayName 
+                        Reference   = $SubPermissionsReference
+                    }
+                )
+            }
+
         }
     }
 
     #UPDATE USER
     switch ($action) {
         'GrantPermission' {
-            $correlatedAccount.roles = @($newRoles)
+            $correlatedAccount.roles = @($currentRoles)
 
             $body = ($correlatedAccount | ConvertTo-Json -Depth 10)
 
@@ -200,6 +251,7 @@ try {
                 Body        = ([System.Text.Encoding]::UTF8.GetBytes($body))
                 ContentType = 'application/json;charset=utf-8'
             }
+             Write-Warning " will set roles: $($correlatedAccount.roles | convertto-json)"
             if (-not($actionContext.DryRun -eq $true)) {
                 $null = Invoke-RestMethod @splatUpdateUserParams -Verbose:$false
             }

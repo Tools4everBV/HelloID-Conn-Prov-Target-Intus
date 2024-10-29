@@ -103,17 +103,18 @@ try {
             throw "Cannot get user error: [$($_.Exception.Message)]"
         }
     }
+
     if ($null -ne $correlatedAccount) {
         Write-verbose "current roles: $($correlatedAccount.roles | convertto-json)"
         $currentRoles = $correlatedAccount.roles.psobject.copy()
+        $process = $true
     }
     else {
-        Throw "Intus-Inplanning account: [$($actionContext.References.Account)] for person: [$($personContext.Person.DisplayName)] could not be found, possibly indicating that it could be deleted"
+        $process = $false
     }
 
     # Sub-permissions
     $newRoles = [System.Collections.Generic.List[PSCustomObject]]::new()
-
     if ($null -ne $currentRoles) {
         $newRoles = $currentRoles.psobject.copy()
     }
@@ -131,7 +132,7 @@ try {
         }
     }
 
-
+if($process){
     #UPDATE USER
     switch ($action) {
         'RevokePermission' {
@@ -165,14 +166,21 @@ try {
         'NoChanges' {
             Write-verbose "Nothing to change - returning subpermissions $($outputContext.SubPermissions.displayname -join("|"))"
             $outputContext.AuditLogs.Add([PSCustomObject]@{
-                    Message = "Grant permission [$($actionContext.References.Permission.DisplayName)] skipped - NoChanges"
+                    Message = "Revoking permission [$($actionContext.References.Permission.DisplayName)] skipped - NoChanges"
                     IsError = $false
                 })
         }
 
     }
     $outputContext.Success = $true
+}else{
+        $outputContext.Success = $true
+            $outputContext.AuditLogs.Add([PSCustomObject]@{
+                    Message = "Intus-Inplanning account: [$($actionContext.References.Account)] could not be found, possibly indicating that it could be deleted - revoke was successful"
+                    IsError = $false
+                })
 
+}
 }
 catch {
     $outputContext.success = $false
@@ -180,11 +188,11 @@ catch {
     if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-Intus-InplanningError -ErrorObject $ex
-        $auditMessage = "Could not grant Intus-Inplanning permission. Error: $($errorObj.FriendlyMessage)"
+        $auditMessage = "Could not revoke Intus-Inplanning permission. Error: $($errorObj.FriendlyMessage)"
         Write-Warning "Error at Line '$($errorObj.ScriptLineNumber)': $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     }
     else {
-        $auditMessage = "Could not grant Intus-Inplanning permission. Error: $($_.Exception.Message)"
+        $auditMessage = "Could not revoke Intus-Inplanning permission. Error: $($_.Exception.Message)"
         Write-Warning "Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
     $outputContext.AuditLogs.Add([PSCustomObject]@{

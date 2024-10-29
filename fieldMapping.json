@@ -2,49 +2,6 @@
   "Version": "v1",
   "MappingFields": [
     {
-      "Name": "userGroup",
-      "Description": "",
-      "Type": "Text",
-      "MappingActions": [
-        {
-          "MapForActions": [
-            "Create",
-            "Update"
-          ],
-          "MappingMode": "Fixed",
-          "Value": "\"Root\"",
-          "UsedInNotifications": false,
-          "StoreInAccountData": false
-        }
-      ]
-    },
-    {
-      "Name": "active",
-      "Description": "",
-      "Type": "Text",
-      "MappingActions": [
-        {
-          "MapForActions": [
-            "Create",
-            "Disable"
-          ],
-          "MappingMode": "Fixed",
-          "Value": "\"False\"",
-          "UsedInNotifications": false,
-          "StoreInAccountData": false
-        },
-        {
-          "MapForActions": [
-            "Enable"
-          ],
-          "MappingMode": "Fixed",
-          "Value": "\"True\"",
-          "UsedInNotifications": false,
-          "StoreInAccountData": false
-        }
-      ]
-    },
-    {
       "Name": "firstName",
       "Description": "",
       "Type": "Text",
@@ -62,7 +19,7 @@
       ]
     },
     {
-      "Name": "lastName",
+      "Name": "username",
       "Description": "",
       "Type": "Text",
       "MappingActions": [
@@ -71,8 +28,8 @@
             "Create",
             "Update"
           ],
-          "MappingMode": "Complex",
-          "Value": "\"// Please enter the mapping logic to generate the lastName based on name convention.\\r\\nfunction generateLastName() {\\r\\n    let middleName = Person.Name.FamilyNamePrefix;\\r\\n    let lastName = Person.Name.FamilyName;\\r\\n    let middleNamePartner = Person.Name.FamilyNamePartnerPrefix;\\r\\n    let lastNamePartner = Person.Name.FamilyNamePartner;\\r\\n    let convention = Person.Name.Convention;\\r\\n    let nameFormatted = '';\\r\\n \\r\\n    // B\\tBoele, van den\\r\\n    // BP\\tBoele – De Vries, van den\\r\\n    // P\\tVries, de\\r\\n    // PB\\tVries – van den Boele, de\\r\\n\\r\\n    switch (convention) {\\r\\n        case \\\"B\\\":\\r\\n            nameFormatted = lastName + ',';\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + ' ' + middleName }\\r\\n            break;\\r\\n        case \\\"BP\\\":\\r\\n            nameFormatted = lastName;\\r\\n\\r\\n            nameFormatted = nameFormatted + ' - ';\\r\\n\\r\\n            if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + middleNamePartner + ' ' }\\r\\n            nameFormatted = nameFormatted + lastNamePartner + ',';\\r\\n\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + ' ' + middleName }\\r\\n            break;\\r\\n        case \\\"P\\\":\\r\\n            nameFormatted = lastNamePartner + ',';\\r\\n            if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + ' ' + middleNamePartner }\\r\\n            break;\\r\\n        case \\\"PB\\\":\\r\\n            nameFormatted = lastNamePartner;\\r\\n\\r\\n            nameFormatted = nameFormatted + ' - ';\\r\\n\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + middleName + ' ' }\\r\\n            nameFormatted = nameFormatted + lastName + ',';\\r\\n\\r\\n            if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + ' ' + middleNamePartner }\\r\\n            break;\\r\\n        default:\\r\\n            nameFormatted = lastName + ',';\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + ' ' + middleName }\\r\\n            break;\\r\\n    }\\r\\n    let lastNameFormatted = nameFormatted.trim();\\r\\n\\r\\n    return lastNameFormatted;\\r\\n}\\r\\n \\r\\ngenerateLastName();\"",
+          "MappingMode": "Field",
+          "Value": "\"Person.ExternalId\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
@@ -89,14 +46,14 @@
             "Update"
           ],
           "MappingMode": "Complex",
-          "Value": "\"function getValue() {\\r\\n    return  Person.Accounts._a4b09074cd98bc1bfcf0331ff9da84bd.mail;\\r\\n}\\r\\ngetValue();\"",
+          "Value": "\"function getValue() {\\r\\n    return  Person.Accounts._4c2011579e8f496da985e401e7fafa32.mail;\\r\\n\\r\\n}\\r\\ngetValue();\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
       ]
     },
     {
-      "Name": "username",
+      "Name": "lastName",
       "Description": "",
       "Type": "Text",
       "MappingActions": [
@@ -106,24 +63,65 @@
             "Update"
           ],
           "MappingMode": "Complex",
-          "Value": "\"function getValue() {\\n    return  Person.Accounts._a4b09074cd98bc1bfcf0331ff9da84bd.mail\\n}\\ngetValue();\"",
+          "Value": "\"// Please enter the mapping logic to generate the lastName based on name convention.\\r\\nfunction generateLastName() {\\r\\n    let middleName = Person.Name.FamilyNamePrefix;\\r\\n    let lastName = Person.Name.FamilyName;\\r\\n    let middleNamePartner = Person.Name.FamilyNamePartnerPrefix;\\r\\n    let lastNamePartner = Person.Name.FamilyNamePartner;\\r\\n    let convention = Person.Name.Convention;\\r\\n    let nameFormatted = '';\\r\\n \\r\\n    // B\\tBoele, van den\\r\\n    // BP\\tBoele – De Vries, van den\\r\\n    // P\\tVries, de\\r\\n    // PB\\tVries – van den Boele, de\\r\\n\\r\\n    nameFormatted = \\\"\\\"\\r\\n\\r\\n    switch (convention) {\\r\\n        case \\\"B\\\":\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + middleName + ' ' }\\r\\n            nameFormatted += lastName;\\r\\n            break;\\r\\n        case \\\"BP\\\":\\r\\n           if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted  + middleName + ' ' }\\r\\n            nameFormatted += lastName;\\r\\n            nameFormatted += ' - ';\\r\\n\\r\\n            if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + middleNamePartner + ' ' }\\r\\n            nameFormatted += lastNamePartner\\r\\n            break;\\r\\n        case \\\"P\\\":\\r\\n            if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + middleNamePartner + ' ' }\\r\\n            nameFormatted += lastNamePartner \\r\\n            break;\\r\\n        case \\\"PB\\\":\\r\\n           if (typeof middleNamePartner !== 'undefined' && middleNamePartner) { nameFormatted = nameFormatted + middleNamePartner + ' ' }\\r\\n            nameFormatted += lastNamePartner;\\r\\n\\r\\n            nameFormatted = nameFormatted + ' - ';\\r\\n\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + middleName + ' ' }\\r\\n            nameFormatted = nameFormatted + lastName\\r\\n        \\r\\n            break;\\r\\n        default:\\r\\n            if (typeof middleName !== 'undefined' && middleName) { nameFormatted = nameFormatted + middleName + ' ' }\\r\\n            nameFormatted += lastName;\\r\\n            break;\\r\\n    }\\r\\n    let lastNameFormatted = nameFormatted.trim();\\r\\n\\r\\n    return lastNameFormatted;\\r\\n}\\r\\n \\r\\ngenerateLastName();\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
       ]
     },
     {
-      "Name": "costCenter",
+      "Name": "active",
       "Description": "",
       "Type": "Text",
       "MappingActions": [
         {
           "MapForActions": [
-            "Create",
-            "Update"
+            "Disable"
+          ],
+          "MappingMode": "Fixed",
+          "Value": "\"False\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        },
+        {
+          "MapForActions": [
+            "Enable",
+            "Create"
+          ],
+          "MappingMode": "Fixed",
+          "Value": "\"True\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "userGroup",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create"
+          ],
+          "MappingMode": "Fixed",
+          "Value": "\"Root\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "resource",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create"
           ],
           "MappingMode": "Field",
-          "Value": "\"\"",
+          "Value": "\"Person.ExternalId\"",
           "UsedInNotifications": false,
           "StoreInAccountData": false
         }
