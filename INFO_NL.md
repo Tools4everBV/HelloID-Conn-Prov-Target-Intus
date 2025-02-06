@@ -2,7 +2,7 @@ De Intus InPlanning Source & Target Connectoren integreren Intus InPlanning van 
 
 ## Wat is Intus InPlanning?
 
-Intus InPlanning is een softwaretool voor tijd- en planningbeheer binnen organisaties. De tool is ontwikkeld door Intus en helpt bedrijven met het plannen van medewerkers, beheren van roosters en optimaliseren van personeelsinzet. De tool is onder meer gericht op organisaties die actief zijn in de zorg, horeca, retail en andere sectoren waar flexibel en efficiënt personeelsbeheer een belangrijke rol speelt.
+Intus InPlanning is een softwaretool voor tijd- en planningbeheer binnen organisaties. De tool is ontwikkeld door Intus en helpt bedrijven met het plannen van medewerkers, beheren van roosters en optimaliseren van personeelsinzet. De tool is onder meer gericht op organisaties die actief zijn in de zorg, industrie, retail en andere sectoren waar flexibel en efficiënt personeelsbeheer een belangrijke rol speelt.
 
 ## Waarom is Intus InPlanning koppeling handig?
 
@@ -55,6 +55,6 @@ Met behulp van HelloID kan je diverse bronsystemen en doelsystemen aan Intus InP
 * **Intus InPlanning - Microsoft Active** Directory/Entra ID koppeling: De Intus InPlanning - Microsoft Active Directory/Entra ID koppeling zorgt dat je de gebruikers en autorisaties in Active Directory of de cloudgebaseerde tegenhanger Entra ID baseert op de roosterplanning die je in Intus InPlanning maakt. Prettig, want zo weet je zeker dat gegevens altijd foutloos zijn, eventuele mutaties in je doelsystemen direct worden doorgevoerd en je altijd met up-to-date informatie over beschikbaar personeel werkt. 
 * **Intus InPlanning - iProtect koppeling:** De Intus InPlanning - iProtect koppeling via HelloID versterkt de samenwerking tussen HR en IT. Dankzij deze integratie zorgt HelloID dat een persoon in iProtect op basis van zijn rooster de juiste toegang krijgt tot fysieke ruimtes, zoals een specifieke afdeling of medicijnruimte.  
 * **Intus InPlanning – Nedap Ons koppeling:** De Intus InPlanning – Nedap Ons koppeling zorgt dat autorisaties in Nedap Ons altijd up-to-date zijn op basis van je roosterdata. Prettig, want zo heb je hiernaar geen omkijken, voorkom je dat onbevoegden onbedoeld toegang hebben tot privacygevoelige cliëntengegevens en weet je zeker dat autorisaties in lijn zijn met wet- en regelgeving.
-* **Intus InPlanning – Epic HiX koppeling:** De Intus InPlanning – HiX koppeling zorgt dat flexmedewerkers op momenten waarop zij zijn ingeroosterd onder meer bij de juiste cliëntendossiers in HiX kunnen. Zo weet je zeker dat zij optimaal hun werk kunnen doen, terwijl je tegelijkertijd zorgt dat cliëntendossiers alleen voor bevoegden toegankelijk zijn.
+* **Intus InPlanning – ChipSoft HiX koppeling:** De Intus InPlanning – HiX koppeling zorgt dat flexmedewerkers op momenten waarop zij zijn ingeroosterd onder meer bij de juiste cliëntendossiers in HiX kunnen. Zo weet je zeker dat zij optimaal hun werk kunnen doen, terwijl je tegelijkertijd zorgt dat cliëntendossiers alleen voor bevoegden toegankelijk zijn.
 
 HelloID biedt ondersteuning voor meer dan 200 connectoren. Je koppelt de IAM-oplossing van Tools4ever hiermee aan nagenoeg alle populaire bron- en doelsystemen. Benieuwd naar de mogelijkheden? Op onze website <a href="https://www.tools4ever.nl/connectoren/">hier</a> vind je een overzicht van alle beschikbare connectoren.
